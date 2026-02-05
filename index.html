@@ -391,6 +391,10 @@
     </div>
 
     <script>
+        // GOOGLE SHEETS CONFIGURATION
+        // Replace this with your Google Apps Script Web App URL after deployment
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBuyLzwGhyt39_l0qjcvVtpySjBtTrxposNCIJtbg2bMfFiICF2klWbjU6VWGfWM9F/exec';
+        
         // Load responses when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadResponses();
@@ -426,7 +430,7 @@
             try {
                 if (editingId) {
                     // Update existing response
-                    await window.storage.set(editingId, JSON.stringify(formData), true);
+                    await updateResponse(editingId, formData);
                     alert('✅ Your trip details have been updated!');
                 } else {
                     // Check if name already exists
@@ -435,7 +439,7 @@
                         if (!confirm(`A submission from "${formData.name}" already exists. Do you want to update it?`)) {
                             return;
                         }
-                        await window.storage.set(existingResponse.id, JSON.stringify(formData), true);
+                        await updateResponse(existingResponse.id, formData);
                         alert('✅ Your trip details have been updated!');
                     } else {
                         // Save new response
@@ -450,50 +454,71 @@
                 document.getElementById('submitBtn').textContent = 'Submit Trip Details';
                 
                 // Reload responses
-                loadResponses();
+                await loadResponses();
             } catch (error) {
                 alert('❌ Error saving response. Please try again.');
                 console.error(error);
             }
         });
 
-        // Save response to storage
+        // Save response to Google Sheets
         async function saveResponse(data) {
-            // Get existing responses
-            const responses = await getAllResponses();
-            
-            // Add new response with unique ID
-            const id = `response_${Date.now()}`;
-            await window.storage.set(id, JSON.stringify(data), true);
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'save',
+                        data: data
+                    })
+                });
+                return true;
+            } catch (error) {
+                console.error('Error saving to Google Sheets:', error);
+                throw error;
+            }
         }
 
-        // Get all responses from storage
+        // Update existing response in Google Sheets
+        async function updateResponse(id, data) {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id: id,
+                        data: data
+                    })
+                });
+                return true;
+            } catch (error) {
+                console.error('Error updating Google Sheets:', error);
+                throw error;
+            }
+        }
+
+        // Get all responses from Google Sheets
         async function getAllResponses() {
             try {
-                const result = await window.storage.list('response_', true);
-                const responses = [];
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=get');
+                const result = await response.json();
                 
-                if (result && result.keys) {
-                    for (const key of result.keys) {
-                        try {
-                            const item = await window.storage.get(key, true);
-                            if (item && item.value) {
-                                const data = JSON.parse(item.value);
-                                data.id = key; // Add the storage key as an ID
-                                responses.push(data);
-                            }
-                        } catch (e) {
-                            console.error('Error loading response:', e);
-                        }
-                    }
+                if (result.success) {
+                    const responses = result.data;
+                    // Sort by timestamp (most recent first)
+                    responses.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    return responses;
                 }
-                
-                // Sort by timestamp (most recent first)
-                responses.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                
-                return responses;
+                return [];
             } catch (error) {
-                console.error('Error getting responses:', error);
+                console.error('Error getting responses from Google Sheets:', error);
                 return [];
             }
         }
@@ -544,13 +569,17 @@
             }
             
             try {
-                const result = await window.storage.list('response_', true);
-                if (result && result.keys) {
-                    for (const key of result.keys) {
-                        await window.storage.delete(key, true);
-                    }
-                }
-                loadResponses();
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'clear'
+                    })
+                });
+                await loadResponses();
                 alert('✅ All data has been cleared.');
             } catch (error) {
                 alert('❌ Error clearing data. Please try again.');
