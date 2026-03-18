@@ -249,16 +249,6 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="europeArrival">Arrival Date in Europe/UK <span class="required">*</span></label>
-                        <input type="date" id="europeArrival" name="europeArrival" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="firstDestination">1st Destination <span class="required">*</span></label>
-                        <input type="text" id="firstDestination" name="firstDestination" required>
-                    </div>
-
-                    <div class="form-group">
                         <label for="mykonosArrival">Arrival Date in Mykonos <span class="required">*</span></label>
                         <input type="date" id="mykonosArrival" name="mykonosArrival" required>
                     </div>
@@ -274,9 +264,25 @@
                         </select>
                     </div>
 
-                    <div class="form-group full-width">
-                        <label for="lodging">Lodging in Mykonos <span class="required">*</span></label>
-                        <input type="text" id="lodging" name="lodging" required>
+                    <div class="form-group">
+                        <label for="lodging">Mykonos Lodging <span class="required">*</span></label>
+                        <select id="lodging" name="lodging" required onchange="toggleLodgingOther(this.value)">
+                            <option value="">Select...</option>
+                            <option value="Belvedere Hotel">Belvedere Hotel</option>
+                            <option value="Rochari">Rochari</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="lodgingOtherGroup" style="display: none;">
+                        <label for="lodgingOther">Please specify your lodging</label>
+                        <input type="text" id="lodgingOther" name="lodgingOther" placeholder="Enter your lodging details...">
+                    </div>
+
+                    <div class="form-group" id="lodgingLinks" style="display: none; grid-column: 1 / -1;">
+                        <div style="padding: 10px; background: #f8f4ff; border-radius: 6px; font-size: 0.9em;">
+                            <span id="lodgingLinkContent"></span>
+                        </div>
                     </div>
 
                     <div class="section-header">
@@ -300,6 +306,11 @@
                                 <option value="Yes">Yes</option>
                                 <option value="No">No</option>
                             </select>
+                            <div style="margin-top: 8px; padding: 10px; background: white; border-radius: 6px; font-size: 0.9em; line-height: 1.5;">
+                                <strong>📍 Scorpios</strong><br>
+                                Paraga Beach, Mykonos 846 00, Greece<br>
+                                <a href="https://scorpios.com/mykonos" target="_blank" style="color: #667eea; text-decoration: none;">Visit Website →</a>
+                            </div>
                         </div>
                     </div>
 
@@ -316,11 +327,6 @@
                     <div class="form-group">
                         <label for="nextDestination">Next Destination <span class="required">*</span></label>
                         <input type="text" id="nextDestination" name="nextDestination" required>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="usDeparture">Departure Date to US <span class="required">*</span></label>
-                        <input type="date" id="usDeparture" name="usDeparture" required>
                     </div>
 
                     <div class="form-group">
@@ -361,8 +367,6 @@
                         <tr>
                             <th>Name</th>
                             <th># in Party</th>
-                            <th>EU/UK Arrival</th>
-                            <th>1st Destination</th>
                             <th>Mykonos Arrival</th>
                             <th>Transportation</th>
                             <th>Lodging</th>
@@ -371,14 +375,13 @@
                             <th>Activities</th>
                             <th>Mykonos Departure</th>
                             <th>Next Destination</th>
-                            <th>US Departure</th>
                             <th>WhatsApp</th>
                             <th>Group Chat</th>
                         </tr>
                     </thead>
                     <tbody id="responsesBody">
                         <tr class="empty-state">
-                            <td colspan="15">
+                            <td colspan="12">
                                 <p>No responses yet</p>
                                 <p style="font-size: 0.9em; color: #bbb;">Be the first to share your travel details!</p>
                             </td>
@@ -393,7 +396,36 @@
     <script>
         // GOOGLE SHEETS CONFIGURATION
         // Replace this with your Google Apps Script Web App URL after deployment
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBuyLzwGhyt39_l0qjcvVtpySjBtTrxposNCIJtbg2bMfFiICF2klWbjU6VWGfWM9F/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCnd85yf11r-2PtuzF47HTZ600RAyXya9t-3zKHMx1bKOt21GkucZJcE4CeLDTglo7/exec';
+        
+        // Handle lodging dropdown changes
+        function toggleLodgingOther(value) {
+            const otherGroup = document.getElementById('lodgingOtherGroup');
+            const otherInput = document.getElementById('lodgingOther');
+            const linksDiv = document.getElementById('lodgingLinks');
+            const linksContent = document.getElementById('lodgingLinkContent');
+            
+            if (value === 'Other') {
+                otherGroup.style.display = 'flex';
+                otherInput.required = true;
+                linksDiv.style.display = 'none';
+            } else {
+                otherGroup.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+                
+                // Show link for selected hotel
+                if (value === 'Belvedere Hotel') {
+                    linksContent.innerHTML = '🏨 <a href="https://www.belvederehotel.com/" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Visit Belvedere Hotel Website →</a>';
+                    linksDiv.style.display = 'block';
+                } else if (value === 'Rochari') {
+                    linksContent.innerHTML = '🏨 <a href="https://rochari.com/" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Visit Rochari Website →</a>';
+                    linksDiv.style.display = 'block';
+                } else {
+                    linksDiv.style.display = 'none';
+                }
+            }
+        }
         
         // Load responses when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -412,17 +444,14 @@
                 partySize: document.getElementById('partySize').value,
                 whatsapp: document.getElementById('whatsapp').value,
                 groupChat: document.getElementById('groupChat').value,
-                europeArrival: document.getElementById('europeArrival').value,
-                firstDestination: document.getElementById('firstDestination').value,
                 mykonosArrival: document.getElementById('mykonosArrival').value,
                 transportation: document.getElementById('transportation').value,
-                lodging: document.getElementById('lodging').value,
+                lodging: document.getElementById('lodging').value === 'Other' ? document.getElementById('lodgingOther').value : document.getElementById('lodging').value,
                 event1: document.getElementById('event1').value,
                 event2: document.getElementById('event2').value,
                 activities: document.getElementById('activities').value || 'N/A',
                 mykonosDeparture: document.getElementById('mykonosDeparture').value,
                 nextDestination: document.getElementById('nextDestination').value,
-                usDeparture: document.getElementById('usDeparture').value,
                 timestamp: new Date().toISOString()
             };
 
@@ -537,7 +566,7 @@
             if (responses.length === 0) {
                 tbody.innerHTML = `
                     <tr class="empty-state">
-                        <td colspan="15">
+                        <td colspan="12">
                             <p>No responses yet</p>
                             <p style="font-size: 0.9em; color: #bbb;">Be the first to share your travel details!</p>
                         </td>
@@ -551,17 +580,14 @@
                 <tr>
                     <td>${escapeHtml(r.name)}</td>
                     <td>${escapeHtml(r.partySize)}</td>
-                    <td>${formatDate(r.europeArrival)}</td>
-                    <td>${escapeHtml(r.firstDestination)}</td>
                     <td>${formatDate(r.mykonosArrival)}</td>
                     <td>${escapeHtml(r.transportation)}</td>
-                    <td>${escapeHtml(r.lodging)}</td>
+                    <td>${escapeHtml(r.lodging || 'N/A')}</td>
                     <td>${escapeHtml(r.event1)}</td>
                     <td>${escapeHtml(r.event2)}</td>
                     <td>${escapeHtml(r.activities)}</td>
                     <td>${formatDate(r.mykonosDeparture)}</td>
                     <td>${escapeHtml(r.nextDestination)}</td>
-                    <td>${formatDate(r.usDeparture)}</td>
                     <td>${escapeHtml(r.whatsapp || 'N/A')}</td>
                     <td>${escapeHtml(r.groupChat || 'N/A')}</td>
                 </tr>
@@ -655,17 +681,25 @@
             document.getElementById('partySize').value = response.partySize;
             document.getElementById('whatsapp').value = response.whatsapp || '';
             document.getElementById('groupChat').value = response.groupChat || '';
-            document.getElementById('europeArrival').value = response.europeArrival;
-            document.getElementById('firstDestination').value = response.firstDestination;
             document.getElementById('mykonosArrival').value = response.mykonosArrival;
             document.getElementById('transportation').value = response.transportation;
-            document.getElementById('lodging').value = response.lodging;
+            
+            // Handle lodging field
+            const lodgingValue = response.lodging || '';
+            if (lodgingValue === 'Belvedere Hotel' || lodgingValue === 'Rochari') {
+                document.getElementById('lodging').value = lodgingValue;
+                toggleLodgingOther(lodgingValue);
+            } else if (lodgingValue && lodgingValue !== 'N/A') {
+                document.getElementById('lodging').value = 'Other';
+                toggleLodgingOther('Other');
+                document.getElementById('lodgingOther').value = lodgingValue;
+            }
+            
             document.getElementById('event1').value = response.event1;
             document.getElementById('event2').value = response.event2;
             document.getElementById('activities').value = response.activities === 'N/A' ? '' : response.activities;
             document.getElementById('mykonosDeparture').value = response.mykonosDeparture;
             document.getElementById('nextDestination').value = response.nextDestination;
-            document.getElementById('usDeparture').value = response.usDeparture;
             document.getElementById('editingId').value = response.id;
             
             // Update button text
